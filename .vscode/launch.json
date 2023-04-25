@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        
+
+    {
+        "command": "python ./Main.py",
+        "name": "Launch",
+        "request": "launch",
+        "type": "node-terminal"
+    }
+    ]
+}
