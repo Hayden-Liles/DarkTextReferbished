@@ -29,7 +29,7 @@ class MapFrameController:
     def createAreaMap(self):
         area_map = []
         current_point = (self.createStartPoint(), self.createStartPoint())
-        area_map.append({'coordinates': f'{current_point[0]},{current_point[1]}', 'coordType': "inner", 'cellColor': groundColor})
+        area_map.append({'coords': f'{current_point[0]},{current_point[1]}', 'coordType': "inner", 'cellColor': groundColor})
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         while len([item for item in area_map if item['coordType'] == "inner"]) < maxGround:
             dx, dy = random.choice(directions)
@@ -40,13 +40,13 @@ class MapFrameController:
             if 0 <= x < mapSize // cellSize and 0 <= y < mapSize // cellSize:
                 current_point = (x, y)
                 coord_key = f'{current_point[0]},{current_point[1]}'
-                if not any(item['coordinates'] == coord_key for item in area_map):
-                    area_map.append({'coordinates': coord_key, 'coordType': "inner", 'cellColor': groundColor})
+                if not any(item['coords'] == coord_key for item in area_map):
+                    area_map.append({'coords': coord_key, 'coordType': "inner", 'cellColor': groundColor})
 
         return area_map
 
-    def drawMap(self, canvas, area_map):
-        area_map_dict = {item['coordinates']: (item['coordType'], item['cellColor']) for item in area_map}
+    def drawMap(self, canvas, area_map, rectangles):
+        area_map_dict = {item['coords']: (item['coordType'], item['cellColor']) for item in area_map}
         for i in range(mapSize // cellSize):
             for j in range(mapSize // cellSize):
                 x1 = i * (cellSize + cellBorderSize)
@@ -64,13 +64,15 @@ class MapFrameController:
                 else:
                     area_type, color = "outer", voidColor
 
-                canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline=borderColor)
+                rect = canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline=borderColor)
+                rectangles[coord_key] = rect
 
 mapFrameController = MapFrameController()
 
 class MapFrame(customtkinter.CTkFrame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.rectangles = {}
 
         self.map_frame_controller = MapFrameController()
 
@@ -81,7 +83,7 @@ class MapFrame(customtkinter.CTkFrame):
         self.canvas.pack()
 
         self.area_map = self.map_frame_controller.createAreaMap()
-        self.map_frame_controller.drawMap(self.canvas, self.area_map)
+        self.map_frame_controller.drawMap(self.canvas, self.area_map, self.rectangles)
 
     def getMapData(self):
         return {
@@ -90,8 +92,23 @@ class MapFrame(customtkinter.CTkFrame):
 
     def loadMapData(self, map_data):
         self.area_map = map_data["area_map"]
-        self.map_frame_controller.drawMap(self.canvas, self.area_map)
+        self.map_frame_controller.drawMap(self.canvas, self.area_map, self.rectangles)
         return self
+    
+    def updateCell(self, cell):
+        coords = cell["coords"]
+        cellColor = cell["cellColor"]
+        area_map = mapServices.getMap()
+        found = False
+        for item in area_map["area_map"]:
+            if item['coords'] == coords:
+                item['cellColor'] = cellColor
+                # TODO add more properties here if needed
+                found = True
+                break
+        if not found:
+            pass
+        self.canvas.itemconfigure(self.rectangles[coords], fill=cellColor)
 
 
 

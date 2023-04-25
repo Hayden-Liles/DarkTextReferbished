@@ -14,7 +14,7 @@ class MapServices:
         map_data_to_save = mapData.getMapData()
         # Creating border
         for item in map_data_to_save["area_map"]:
-            coords = tuple(map(int, item['coordinates'].split(',')))
+            coords = tuple(map(int, item['coords'].split(',')))
 
             xCord, yCord = coords
             if xCord == 23 or xCord == 0 or yCord == 23 or yCord == 0:
@@ -27,6 +27,14 @@ class MapServices:
     def getMap(self):
         map = appState.get_data('curMap')
         return map
+    
+    def getInnerArea(self):
+        map = self.getMap()["area_map"]
+        inner = []
+        for x in map:
+            if x['coordType'] == 'inner':
+                inner.append(x)
+        return inner
 
 
 mapServices = MapServices()
