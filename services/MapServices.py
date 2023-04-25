@@ -15,7 +15,6 @@ class MapServices:
         # Creating border
         for item in map_data_to_save["area_map"]:
             coords = tuple(map(int, item['coordinates'].split(',')))
-            data = (item['coordType'], item['cellColor'])
 
             xCord, yCord = coords
             if xCord == 23 or xCord == 0 or yCord == 23 or yCord == 0:

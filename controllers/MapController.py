@@ -7,7 +7,7 @@ from services.MapServices import mapServices
 mapSize = 624
 cellSize = 26
 cellBorderSize = 1
-groundRatio = .6
+groundRatio = .5
 maxGround = int((mapSize // cellSize) * (mapSize // cellSize) * groundRatio)
 borderColor = "black"
 voidColor = "black"
@@ -23,15 +23,15 @@ class MapFrameController:
         pass
 
     def createStartPoint(self):
-        return random.randint(0, mapSize // cellSize - 1)
+        startPoint = random.randint(0, mapSize // cellSize - 1)
+        return startPoint
 
     def createAreaMap(self):
-        area_map = {}
-
+        area_map = []
         current_point = (self.createStartPoint(), self.createStartPoint())
-        area_map[current_point] = ("inner", groundColor)
+        area_map.append({'coordinates': f'{current_point[0]},{current_point[1]}', 'coordType': "inner", 'cellColor': groundColor})
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        while len([coord for coord, (area_type, _) in area_map.items() if area_type == "inner"]) < maxGround:
+        while len([item for item in area_map if item['coordType'] == "inner"]) < maxGround:
             dx, dy = random.choice(directions)
             x, y = current_point
             x += dx
@@ -39,22 +39,14 @@ class MapFrameController:
 
             if 0 <= x < mapSize // cellSize and 0 <= y < mapSize // cellSize:
                 current_point = (x, y)
-                area_map[current_point] = ("inner", groundColor)
-        
-        map_data = []
+                coord_key = f'{current_point[0]},{current_point[1]}'
+                if not any(item['coordinates'] == coord_key for item in area_map):
+                    area_map.append({'coordinates': coord_key, 'coordType': "inner", 'cellColor': groundColor})
 
-        for coordinates, (coord_type, cell_color) in area_map.items():
-            coord_dict = {
-                'coordinates': f'{coordinates[0]},{coordinates[1]}',
-                'coordType': coord_type,
-                'cellColor': cell_color,
-            }
-            map_data.append(coord_dict)
-
-        result = map_data
-        return result
+        return area_map
 
     def drawMap(self, canvas, area_map):
+        area_map_dict = {item['coordinates']: (item['coordType'], item['cellColor']) for item in area_map}
         for i in range(mapSize // cellSize):
             for j in range(mapSize // cellSize):
                 x1 = i * (cellSize + cellBorderSize)
@@ -62,22 +54,19 @@ class MapFrameController:
                 x2 = x1 + cellSize
                 y2 = y1 + cellSize
 
-                is_border = i == 0 or j == 0 or i == (
-                    mapSize // cellSize - 1) or j == (mapSize // cellSize - 1)
+                is_border = i == 0 or j == 0 or i == (mapSize // cellSize - 1) or j == (mapSize // cellSize - 1)
+                coord_key = f'{i},{j}'
 
                 if is_border:
                     color = voidColor
-                elif (i, j) in area_map:
-                    area_type, color = area_map[(i, j)]
+                elif coord_key in area_map_dict:
+                    area_type, color = area_map_dict[coord_key]
                 else:
                     area_type, color = "outer", voidColor
 
-                canvas.create_rectangle(
-                    x1, y1, x2, y2, fill=color, outline=borderColor)
-
+                canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline=borderColor)
 
 mapFrameController = MapFrameController()
-
 
 class MapFrame(customtkinter.CTkFrame):
     def __init__(self, *args, **kwargs):
@@ -100,15 +89,10 @@ class MapFrame(customtkinter.CTkFrame):
         }
 
     def loadMapData(self, map_data):
-        self.area_map = {}
-        for item in map_data["area_map"]:
-            coords = tuple(map(int, item['coordinates'].split(',')))
-            coord_type = item['coordType']
-            cell_color = item['cellColor']
-            self.area_map[coords] = (coord_type, cell_color)
-
+        self.area_map = map_data["area_map"]
         self.map_frame_controller.drawMap(self.canvas, self.area_map)
         return self
+
 
 
 class MapController:

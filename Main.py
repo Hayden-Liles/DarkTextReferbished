@@ -11,6 +11,7 @@ class App(customtkinter.CTk):
         self.configureWindow()
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure((0, 1), weight=1)
+        
         self.map_frame = mapController.checkMapExists(self)
 
         # SECTION TESTING LAYOUT
